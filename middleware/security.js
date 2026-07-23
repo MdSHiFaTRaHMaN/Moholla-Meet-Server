@@ -5,12 +5,25 @@ const config = require('../config/config');
 
 const configureSecurityMiddleware = (app) => {
   // CORS configuration
+  // CORS configuration for local & live production deployments
   app.use(
     cors({
-      origin: [config.clientUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'],
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, serverless)
+        if (!origin) return callback(null, true);
+        if (
+          origin.includes('localhost') ||
+          origin.includes('127.0.0.1') ||
+          origin.endsWith('.vercel.app') ||
+          (config.clientUrl && origin.startsWith(config.clientUrl))
+        ) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-user']
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-user', 'x-refresh-token']
     })
   );
 
