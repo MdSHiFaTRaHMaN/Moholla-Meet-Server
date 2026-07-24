@@ -53,18 +53,18 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/workspaces', workspaceRoutes);
-app.use('/api/v1/projects', projectRoutes);
-app.use('/api/v1/boards', boardRoutes);
-app.use('/api/v1/tasks', taskRoutes);
-app.use('/api/v1/chat', chatRoutes);
-app.use('/api/v1/documents', documentRoutes);
-app.use('/api/v1/files', fileRoutes);
-app.use('/api/v1/meetings', meetingRoutes);
-app.use('/api/v1/ai', aiRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
+// API Routes (supports /api/v1/*, /api/*, and top-level /* for maximum client compatibility)
+app.use(['/api/v1/auth', '/api/auth', '/auth'], authRoutes);
+app.use(['/api/v1/workspaces', '/api/workspaces', '/workspaces'], workspaceRoutes);
+app.use(['/api/v1/projects', '/api/projects', '/projects'], projectRoutes);
+app.use(['/api/v1/boards', '/api/boards', '/boards'], boardRoutes);
+app.use(['/api/v1/tasks', '/api/tasks', '/tasks'], taskRoutes);
+app.use(['/api/v1/chat', '/api/chat', '/chat'], chatRoutes);
+app.use(['/api/v1/documents', '/api/documents', '/documents'], documentRoutes);
+app.use(['/api/v1/files', '/api/files', '/files'], fileRoutes);
+app.use(['/api/v1/meetings', '/api/meetings', '/meetings'], meetingRoutes);
+app.use(['/api/v1/ai', '/api/ai', '/ai'], aiRoutes);
+app.use(['/api/v1/analytics', '/api/analytics', '/analytics'], analyticsRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
