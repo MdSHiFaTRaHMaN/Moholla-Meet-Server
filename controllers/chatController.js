@@ -6,8 +6,9 @@ const Workspace = require('../models/Workspace');
 exports.getChannels = async (req, res) => {
   try {
     const { workspaceId } = req.query;
+    // Allow access to workspace channels or channels where user is explicitly a member
     const query = workspaceId
-      ? { workspace: workspaceId, members: req.user.id }
+      ? { $or: [{ workspace: workspaceId }, { members: req.user.id }] }
       : { members: req.user.id };
 
     const channels = await Channel.find(query)
@@ -31,7 +32,20 @@ exports.createChannel = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Channel name is required.' });
     }
 
-    const members = memberIds ? [...new Set([req.user.id, ...memberIds])] : [req.user.id];
+    // Automatically include all members of the workspace in new channels by default
+    let allWsMemberIds = [];
+    if (workspaceId) {
+      try {
+        const ws = await Workspace.findById(workspaceId);
+        if (ws && Array.isArray(ws.members)) {
+          allWsMemberIds = ws.members.map((m) => (m.user ? m.user.toString() : m.toString()));
+        }
+      } catch (_) {}
+    }
+
+    const members = memberIds && memberIds.length > 0
+      ? [...new Set([req.user.id, ...memberIds, ...allWsMemberIds])]
+      : [...new Set([req.user.id, ...allWsMemberIds])];
 
     const channel = await Channel.create({
       workspace: workspaceId,
@@ -45,6 +59,13 @@ exports.createChannel = async (req, res) => {
 
     await channel.populate('members', 'name avatar status role');
     await channel.populate('creator', 'name avatar');
+
+    // Broadcast new_channel to all connected clients via Socket.IO
+    try {
+      const { getIO } = require('../socket/socketManager');
+      getIO().emit('new_channel', channel);
+    } catch (_) {}
+
     res.status(201).json({ success: true, channel });
   } catch (err) {
     console.error('[Chat] CreateChannel error:', err.message);
